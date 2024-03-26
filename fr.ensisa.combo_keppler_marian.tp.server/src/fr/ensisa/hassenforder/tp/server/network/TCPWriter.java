@@ -28,26 +28,15 @@ public class TCPWriter extends BasicAbstractWriter {
     public void createKO() {
         writeInt(Protocol.REPLY_KO);
     }
-    public void replyConnect(String mail, String passwd) {
-
-    	fr.ensisa.hassenforder.tp.database.User user = model.getUsers().getUserByMail(mail);
-		if (user == null){
-			writeInt(Protocol.REPLY_KO);
-		    return;
-		}
-		if (user.getPasswd().equals(passwd)) {
+    public void replyConnect(User user,String token) {
 			writeInt(Protocol.REPLY_USER);
 	        writeLong(user.getId());
 	        writeString(user.getName());
-	        writeString( model.getTokens().addNewToken(user.getId()));
+	        writeString(token);
 	        return;
-		}else {
-			model.getTokens().removeToken(user.getId());
-			writeInt(Protocol.REPLY_KO);
-			return;
-		}
     }
     public void writeAllTexts(Collection<SharedTextReply> inputs){
+    	System.out.println("error-here");
     	writeInt(Protocol.REPLY_ALL_TEXTS);
     	writeInt(inputs.size());
         for(SharedTextReply t : inputs){

@@ -39,6 +39,7 @@ public class TCPReader extends BasicAbstractReader {
         	readUserConnect();
             break;
 		case Protocol.REQUEST_GET_ALL_TEXTS:
+			System.out.println("messageReceived");
 			getAllTexts();
             break;
 		case Protocol.REQUEST_CREATE_USER:
@@ -57,6 +58,7 @@ public class TCPReader extends BasicAbstractReader {
         this.id   = readLong();
     }
 	public void readUserConnect(){
+		System.out.println("messageReceived");
         this.userMail   = readString();
         this.userPasswd = readString();
 	}
@@ -64,5 +66,4 @@ public class TCPReader extends BasicAbstractReader {
 		this.token = readString();
         this.id   = readLong();
 	}
-
 }

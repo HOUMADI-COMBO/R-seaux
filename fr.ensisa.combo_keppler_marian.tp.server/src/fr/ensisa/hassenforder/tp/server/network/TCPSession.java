@@ -112,14 +112,22 @@ public class TCPSession extends Thread {
 			TCPReader reader = new TCPReader (connection.getInputStream());
 			reader.receive();
 			switch (reader.getType ()) {
-			case 0 : result = false; break; // socket closed
+			case 0 :
+				result = false;
+			    break; // socket closed
+
 			case Protocol.REQUEST_CONNECT:
-                writer.replyConnect( reader.userMail , reader.userPasswd);
+				fr.ensisa.hassenforder.tp.database.User user = model.getUsers().getUserByMail(reader.userMail);
+				if (user == null)
+					writer.createKO();
+		        String token = model.getTokens().addNewToken(user.getId());
+				writer.replyConnect( user,token);
                 writer.send();
 				break;
-			case Protocol.REQUEST_GET_ALL_TEXTS:
 
+			case Protocol.REQUEST_GET_ALL_TEXTS:
 				if (! model.getTokens().isKnown(reader.token))  {
+					System.out.println("messageReveived-noToken");
 					writer.createKO();    break;   }
 
 				Collection<SharedTextReply> outputs = adaptTexts(model.getAllTexts(reader.id), reader.id);
