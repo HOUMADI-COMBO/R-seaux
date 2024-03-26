@@ -35,6 +35,14 @@ public class TCPWriter extends BasicAbstractWriter {
 	        writeString(token);
 	        return;
     }
+    public void sendCredentials( long id, String name, String mail, String passwd){
+    	writeInt(Protocol.REPLY_CREDENTIAL);
+        writeLong(id);
+        writeString(name);
+        writeString(mail);
+        writeString(passwd);
+        return;
+    }
     public void writeAllTexts(Collection<SharedTextReply> inputs){
     	System.out.println("error-here");
     	writeInt(Protocol.REPLY_ALL_TEXTS);

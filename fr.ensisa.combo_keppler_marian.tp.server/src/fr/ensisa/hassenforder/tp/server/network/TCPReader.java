@@ -13,9 +13,9 @@ import fr.ensisa.hassenforder.tp.database.What;
 import fr.ensisa.hassenforder.tp.network.Protocol;
 
 public class TCPReader extends BasicAbstractReader {
-
     String userPasswd;
     String userMail;
+    String name;
     long id;
     String token;
     Credential credential;
@@ -45,13 +45,16 @@ public class TCPReader extends BasicAbstractReader {
 		case Protocol.REQUEST_CREATE_USER:
 			readUserConnect();
 			break;
+		case Protocol.REQUEST_UPDATE_USER:
+			updateUser();
+			break;
 		case Protocol.REQUEST_CREDENTIAL:
-			readUserConnect();
+			readcredentialsProcess();
 			break;
 		}
     }
 	public void readcreateUserProcess(){
-		credential = new Credential( readString(),readString(),readString());
+		this.credential = new Credential( readString(),readString(),readString());
     }
     public void readcredentialsProcess(){
     	this.token = readString();
@@ -66,4 +69,8 @@ public class TCPReader extends BasicAbstractReader {
 		this.token = readString();
         this.id   = readLong();
 	}
+	public void updateUser(){
+        this.token=readString();
+        this.credential = new Credential( readString(),readString(),readString());
+	    }
 }

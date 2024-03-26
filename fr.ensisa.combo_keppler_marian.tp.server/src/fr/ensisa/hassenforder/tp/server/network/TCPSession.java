@@ -118,21 +118,66 @@ public class TCPSession extends Thread {
 
 			case Protocol.REQUEST_CONNECT:
 				fr.ensisa.hassenforder.tp.database.User user = model.getUsers().getUserByMail(reader.userMail);
-				if (user == null)
+				if (user == null){
 					writer.createKO();
+					break;
+				}
 		        String token = model.getTokens().addNewToken(user.getId());
 				writer.replyConnect( user,token);
                 writer.send();
 				break;
-
 			case Protocol.REQUEST_GET_ALL_TEXTS:
 				if (! model.getTokens().isKnown(reader.token))  {
 					System.out.println("messageReveived-noToken");
-					writer.createKO();    break;   }
+					writer.createKO();
+					break;   }
 
 				Collection<SharedTextReply> outputs = adaptTexts(model.getAllTexts(reader.id), reader.id);
                 writer.writeAllTexts(outputs);
                 writer.send();
+				break;
+			case Protocol.REQUEST_CREATE_USER:
+				if (reader.credential.getName().isEmpty()){
+					writer.createKO();
+					break;
+				}
+				fr.ensisa.hassenforder.tp.database.User user1 = model.getUsers().getUserByName(reader.credential.getName());
+				if (user1 != null) return false;
+				model.getUsers().addUser(	new User(	reader.credential.getName(),reader.credential.getMail(),reader.credential.getPasswd()));
+				writer.createOK();
+				writer.send();
+				break;
+			case Protocol.REQUEST_CREDENTIAL:
+				if (! model.getTokens().isKnown(reader.token)){
+					writer.createKO();
+					break;
+				}
+				User user2 = model.getUsers().getUser(reader.id);
+				if (user2 == null){
+					writer.createKO();
+					break;
+				}
+				writer.sendCredentials(  user2.getId(), user2.getName(), user2.getMail(), user2.getPasswd());
+				writer.send();
+				break;
+			case Protocol.REQUEST_UPDATE_USER:
+				if (! model.getTokens().isKnown(reader.token)){
+					writer.createKO();
+					break;
+				}
+				if (reader.credential.getName().isEmpty()){
+					writer.createKO();
+					break;
+				}
+				User user3= model.getUsers().getUserByName(reader.credential.getName());
+				if (user3 == null){
+					writer.createKO();
+					break;
+				}
+				user3.setMail(reader.credential.getMail());
+				user3.setPasswd(reader.credential.getPasswd());
+				writer.createOK();
+				writer.send();
 				break;
 			default: result = false; // connection jammed
 			}
@@ -142,7 +187,6 @@ public class TCPSession extends Thread {
 			return false;
 		}
 	}
-
 	public void run() {
 		while (true) {
 			if (! operate())
