@@ -40,4 +40,15 @@ public class TPWriter extends BasicAbstractWriter {
         writeString(credential.getMail());
         writeString(credential.getPasswd());
     }
+    public void deleteTextProcess(String token,long textId, long id){
+      	writeInt(Protocol.REQUEST_DELETE_TEXT);
+      	writeString(token);
+      	writeLong(textId);
+      	writeLong(id);
+    }
+    public void newTextProcess(String token, long id){
+      	writeInt(Protocol.REQUEST_NEW_TEXT);
+    	  writeString(token);
+      	writeLong(id);
+    }
 }

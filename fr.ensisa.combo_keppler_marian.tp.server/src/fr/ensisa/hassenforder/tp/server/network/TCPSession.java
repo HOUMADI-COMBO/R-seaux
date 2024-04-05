@@ -179,6 +179,59 @@ public class TCPSession extends Thread {
 				writer.createOK();
 				writer.send();
 				break;
+      case Protocol.REQUEST_DELETE_TEXT:
+				if (! model.getTokens().isKnown(reader.token)){
+					writer.createKO();
+					break;
+				}
+				fr.ensisa.hassenforder.tp.database.Participant participant = model.getParticipants().getParticipant(reader.textId, reader.id);
+				if (participant == null){
+					writer.createKO();
+					break;
+				}
+				if (! participant.getRole().isCreator()){
+					writer.createKO();
+					break;
+				}
+				if (! model.removeText(reader.textId)){
+					writer.createKO();
+					break;
+				}
+				writer.createOK();
+				break;
+			case Protocol.REQUEST_NEW_TEXT:
+				if (! model.getTokens().isKnown(reader.token)){
+					writer.createKO();
+					break;
+				}
+				fr.ensisa.hassenforder.tp.database.User usertext = model.getUsers().getUser(reader.id);
+				if (usertext == null){
+					writer.createKO();
+					break;
+				}
+				if (! model.addText(reader.id)){
+					writer.createKO();
+					break;
+				}
+				writer.createOK();
+				break;
+			case Protocol.REQUEST_GET_TEXT:
+				if (! model.getTokens().isKnown(reader.token)){
+					writer.createKO();
+					break;
+				}
+				fr.ensisa.hassenforder.tp.database.Participant participantText = model.getParticipants().getParticipant(reader.textId, reader.id);
+				if (participantText == null){
+					writer.createKO();
+					break;
+				}
+				if (! participantText.getRole().canRead()){
+					writer.createKO();
+					break;
+				}
+				SharedTextReply output = adaptText(model.getTexts().getSharedText(reader.textId), reader.id, false);
+				writer.sendText(output);
+				break;
 			default: result = false; // connection jammed
 			}
 			if (result) writer.send();

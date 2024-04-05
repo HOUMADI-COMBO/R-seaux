@@ -51,6 +51,12 @@ public class TCPReader extends BasicAbstractReader {
 		case Protocol.REQUEST_CREDENTIAL:
 			readcredentialsProcess();
 			break;
+    case Protocol.REQUEST_DELETE_TEXT:
+			deleteText();
+			break;
+		case Protocol.REQUEST_NEW_TEXT:
+			newText();
+			break;
 		}
     }
 	public void readcreateUserProcess(){
@@ -72,5 +78,14 @@ public class TCPReader extends BasicAbstractReader {
 	public void updateUser(){
         this.token=readString();
         this.credential = new Credential( readString(),readString(),readString());
-	    }
+	}
+  public void deleteText(){
+		this.token = readString();
+		this.textId   = readLong();
+		this.id   = readLong();
+	}
+	public void newText(){
+		this.token = readString();
+		this.id   = readLong();
+	}
 }

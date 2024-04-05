@@ -27,6 +27,7 @@ public class TPReader extends BasicAbstractReader {
     String mail;
     String passwd;
     List<SharedText> output;
+    boolean isOK;
 
     public TPReader(InputStream inputStream) {
         super(inputStream);
@@ -43,8 +44,10 @@ public class TPReader extends BasicAbstractReader {
         eraseFields();
         switch (type) {
         case Protocol.REPLY_KO:
-        	break;
+            this.isOK=false;
+        	  break;
         case Protocol.REPLY_OK:
+            this.isOK=true;
             break;
         case Protocol.REPLY_USER:
         	connectUser();

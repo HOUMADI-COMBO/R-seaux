@@ -152,12 +152,11 @@ public class NetworkSession implements ISession {
 	public Boolean deleteText(String token, long textId, long whoId) {
         try {
         	TPWriter w = new TPWriter(tcp.getOutputStream());
-//TODO
+        	w.deleteTextProcess(token,textId,whoId);
             w.send();
             TPReader r = new TPReader(tcp.getInputStream());
             r.receive();
-//TODO
-    		return null;
+    		return r.isOK;
         } catch (IOException e) {
     		return null;
         }
@@ -167,12 +166,11 @@ public class NetworkSession implements ISession {
 	public Boolean newText(String token, long creatorId) {
         try {
         	TPWriter w = new TPWriter(tcp.getOutputStream());
-//TODO
+        	w.newTextProcess(token,creatorId);
             w.send();
             TPReader r = new TPReader(tcp.getInputStream());
             r.receive();
-//TODO
-    		return null;
+    		return r.isOK;
         } catch (IOException e) {
     		return null;
         }
