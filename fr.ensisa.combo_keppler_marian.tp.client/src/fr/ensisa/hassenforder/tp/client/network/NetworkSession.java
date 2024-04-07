@@ -61,7 +61,6 @@ public class NetworkSession implements ISession {
     		return null;
         }
 	}
-
 	@Override
 	public Credential getCredential(String token, long id) {
         try {
@@ -83,12 +82,11 @@ public class NetworkSession implements ISession {
             w.send();
             TPReader r = new TPReader(tcp.getInputStream());
             r.receive();
-    		return null;
+    		return r.isOk;
         } catch (IOException e) {
     		return null;
         }
 	}
-
 	@Override
 	public Boolean updateUser(String token, Credential credential) {
         try {
@@ -97,7 +95,7 @@ public class NetworkSession implements ISession {
             w.send();
             TPReader r = new TPReader(tcp.getInputStream());
             r.receive();
-    		return null;
+    		return r.isOk;
         } catch (IOException e) {
     		return null;
         }
@@ -122,12 +120,11 @@ public class NetworkSession implements ISession {
 	public SharedText getText(String token, long textId, long whoId) {
         try {
         	TPWriter w = new TPWriter(tcp.getOutputStream());
-//TODO
+           w.getTextProcess(token,  textId, whoId);
             w.send();
             TPReader r = new TPReader(tcp.getInputStream());
             r.receive();
-//TODO
-    		return null;
+    		return r.outputText;
         } catch (IOException e) {
     		return null;
         }
@@ -137,12 +134,11 @@ public class NetworkSession implements ISession {
 	public Boolean saveTextContent(String token, long textId, long whoId, String content) {
         try {
         	TPWriter w = new TPWriter(tcp.getOutputStream());
-//TODO
+        	w.saveTextContentProcess(token, textId,whoId,content);
             w.send();
             TPReader r = new TPReader(tcp.getInputStream());
             r.receive();
-//TODO
-    		return null;
+            return r.isOk;
         } catch (IOException e) {
     		return null;
         }
@@ -156,7 +152,7 @@ public class NetworkSession implements ISession {
             w.send();
             TPReader r = new TPReader(tcp.getInputStream());
             r.receive();
-    		return r.isOK;
+    		return r.isOk;
         } catch (IOException e) {
     		return null;
         }
@@ -170,7 +166,7 @@ public class NetworkSession implements ISession {
             w.send();
             TPReader r = new TPReader(tcp.getInputStream());
             r.receive();
-    		return r.isOK;
+    		return r.isOk;
         } catch (IOException e) {
     		return null;
         }
@@ -180,12 +176,11 @@ public class NetworkSession implements ISession {
 	public Collection<Participant> getAllTextParticipants(String token, long textId, long whoId) {
         try {
         	TPWriter w = new TPWriter(tcp.getOutputStream());
-//TODO
+        	w.getAllTextParticipantsProcess(token, textId,whoId);
             w.send();
             TPReader r = new TPReader(tcp.getInputStream());
             r.receive();
-//TODO
-    		return null;
+    		return r.participants;
         } catch (IOException e) {
     		return null;
         }
@@ -195,27 +190,11 @@ public class NetworkSession implements ISession {
 	public Collection<User> getAllUsers(String token) {
         try {
         	TPWriter w = new TPWriter(tcp.getOutputStream());
-//TODO
+        	w.getAllUserProcess(token);
             w.send();
             TPReader r = new TPReader(tcp.getInputStream());
             r.receive();
-//TODO
-    		return null;
-        } catch (IOException e) {
-    		return null;
-        }
-	}
-
-	@Override
-	public Collection<TextOperation> getAllTextOperations(String token, long textId, long whoId) {
-        try {
-        	TPWriter w = new TPWriter(tcp.getOutputStream());
-//TODO
-            w.send();
-            TPReader r = new TPReader(tcp.getInputStream());
-            r.receive();
-//TODO
-    		return null;
+    		return r.users;
         } catch (IOException e) {
     		return null;
         }
@@ -225,12 +204,25 @@ public class NetworkSession implements ISession {
 	public Boolean saveTextParticipants(String token, long textId, long whoId, Collection<ParticipantOperationRequest> toSave) {
         try {
         	TPWriter w = new TPWriter(tcp.getOutputStream());
-//TODO
+        	w.saveTextParticipantProcess(token,textId,whoId,toSave);
             w.send();
             TPReader r = new TPReader(tcp.getInputStream());
             r.receive();
-//TODO
+    		return r.isOk;
+        } catch (IOException e) {
     		return null;
+        }
+	}
+
+	@Override
+	public Collection<TextOperation> getAllTextOperations(String token, long textId, long whoId) {
+        try {
+        	TPWriter w = new TPWriter(tcp.getOutputStream());
+        	w.getAllTextOperationsProcess(token,textId,whoId);
+            w.send();
+            TPReader r = new TPReader(tcp.getInputStream());
+            r.receive();
+    		return r.operations;
         } catch (IOException e) {
     		return null;
         }
@@ -240,12 +232,11 @@ public class NetworkSession implements ISession {
 	public Boolean saveTextOperations(String token, long textId, long whoId, Collection<TextOperationRequest> toSave) {
         try {
         	TPWriter w = new TPWriter(tcp.getOutputStream());
-//TODO
+            w.saveTextOperationsProcess(token, textId, whoId, toSave);
             w.send();
             TPReader r = new TPReader(tcp.getInputStream());
             r.receive();
-//TODO
-    		return null;
+            return r.isOk;
         } catch (IOException e) {
     		return null;
         }

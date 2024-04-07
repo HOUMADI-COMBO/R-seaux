@@ -1,7 +1,6 @@
 package fr.ensisa.hassenforder.tp.database;
 
 public class Role {
-
 	public static final int OWNER 		= 0x08;
 	public static final int EDITER 		= 0x04;
 	public static final int COMMENTER	= 0x02;
