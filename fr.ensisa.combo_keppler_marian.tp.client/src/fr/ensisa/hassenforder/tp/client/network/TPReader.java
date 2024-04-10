@@ -27,7 +27,12 @@ public class TPReader extends BasicAbstractReader {
     String mail;
     String passwd;
     List<SharedText> output;
-    boolean isOK;
+    SharedText outputText;
+    List<User> users;
+    Collection<TextOperation> operations;
+    Collection<Participant> participants;
+    boolean isOk;
+	DateFormat formatter ;
 
     public TPReader(InputStream inputStream) {
         super(inputStream);
@@ -44,10 +49,10 @@ public class TPReader extends BasicAbstractReader {
         eraseFields();
         switch (type) {
         case Protocol.REPLY_KO:
-            this.isOK=false;
-        	  break;
+            this.isOk=false;
+        	break;
         case Protocol.REPLY_OK:
-            this.isOK=true;
+        	this.isOk=true;
             break;
         case Protocol.REPLY_USER:
         	connectUser();
@@ -58,12 +63,83 @@ public class TPReader extends BasicAbstractReader {
         case Protocol.REPLY_CREDENTIAL:
             giveCredential();
             break;
-
-
-//TODO
+        case Protocol.REPLY_ALL_USERS:
+            replyAllUsers();
+            break;
+        case Protocol.REPLY_ALL_OPERATIONS:
+        	replyAllTextOperationsProcess();
+        	break;
+        case Protocol.REPLY_TEXT:
+        	replyText();
+        	break;
+        case Protocol.REPLY_ALL_PARTICIPANTS:
+        	replyAllParticipants();
+        	break;
         }
     }
+    public void replyAllParticipants(){
+    	participants = new ArrayList<Participant>();
+    	int size = readInt();
+    	for(int i=0 ; i<size;i++){
+        	Participant p = new Participant(readLong(),readString(),new Role(readInt()));
+        	participants.add(p);
+    	}
 
+    }
+    public void replyText(){
+    	 long id = readLong();
+         String dateS = readString();
+         String content = readString();
+         int role = readInt();
+         String owner = readString();
+         try {
+             SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH);
+             Date date = sdf.parse(dateS);
+             System.out.println("Date convertie : " + date);
+             this.outputText = new SharedText(id,date,content,new Role(role),owner);
+         } catch (ParseException e) {
+             System.out.println("Erreur de parsing : " + e.getMessage());
+         }
+
+    }
+    public void replyAllTextOperationsProcess(){
+    	this.operations  = new ArrayList<TextOperation>();
+    	int size = readInt();
+    	for(int i = 0;i<size;i++){
+    		try{
+                Long id = readLong();
+                SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH);
+                Date date = sdf.parse(readString());
+                String name=readString();
+                boolean[] what = {readBoolean(),readBoolean(),readBoolean()};
+                int where = readInt();
+                String text = readString();
+
+        		What w=What.COMMENT;
+				if (what[0] ==true )
+					w=What.COMMENT;
+				if (what[1] ==true  )
+					w=What.INSERT;
+				if (what[2] ==true )
+					w=What.DELETE;
+				TextOperation t = new TextOperation(id,date,name,w,where,text);
+                this.operations.add(t);
+
+    		}catch (ParseException e) {
+                System.out.println("Erreur de parsing : " + e.getMessage());
+            }
+    	}
+
+    }
+
+    public void replyAllUsers(){
+    	int size = readInt();
+    	this.users=new ArrayList<User>();
+        for(int i=0;i<size;i++){
+            User u = new User(readLong(),readString(),readString());
+            users.add(u);
+        }
+    }
 	public void giveCredential(){
         this.id = readLong();
         this.name =readString();
@@ -72,11 +148,6 @@ public class TPReader extends BasicAbstractReader {
         return;
 	}
     public void allTextsOperations(){
-
-    	/////////////
-    	DateFormat formatter = new SimpleDateFormat("dd-MMM-yy");
-    	System.out.println("ici---------");
-    	//////////////////////////////
     	this.output = new ArrayList<SharedText>();
 		int size =readInt();
 		for (int i=0;i<size;i++) {

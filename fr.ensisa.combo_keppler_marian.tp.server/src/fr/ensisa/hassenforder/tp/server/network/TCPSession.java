@@ -124,28 +124,32 @@ public class TCPSession extends Thread {
 				}
 		        String token = model.getTokens().addNewToken(user.getId());
 				writer.replyConnect( user,token);
-                writer.send();
 				break;
 			case Protocol.REQUEST_GET_ALL_TEXTS:
 				if (! model.getTokens().isKnown(reader.token))  {
 					System.out.println("messageReveived-noToken");
 					writer.createKO();
-					break;   }
+					break;
+				}
 
 				Collection<SharedTextReply> outputs = adaptTexts(model.getAllTexts(reader.id), reader.id);
                 writer.writeAllTexts(outputs);
-                writer.send();
 				break;
 			case Protocol.REQUEST_CREATE_USER:
 				if (reader.credential.getName().isEmpty()){
+					System.out.println("messageReveived-noToken");
 					writer.createKO();
 					break;
 				}
 				fr.ensisa.hassenforder.tp.database.User user1 = model.getUsers().getUserByName(reader.credential.getName());
-				if (user1 != null) return false;
+				if (user1 != null){
+					System.out.println("User already exist");
+					writer.createKO();
+					break;
+				}
 				model.getUsers().addUser(	new User(	reader.credential.getName(),reader.credential.getMail(),reader.credential.getPasswd()));
+				System.out.println("User created !");
 				writer.createOK();
-				writer.send();
 				break;
 			case Protocol.REQUEST_CREDENTIAL:
 				if (! model.getTokens().isKnown(reader.token)){
@@ -158,7 +162,6 @@ public class TCPSession extends Thread {
 					break;
 				}
 				writer.sendCredentials(  user2.getId(), user2.getName(), user2.getMail(), user2.getPasswd());
-				writer.send();
 				break;
 			case Protocol.REQUEST_UPDATE_USER:
 				if (! model.getTokens().isKnown(reader.token)){
@@ -177,19 +180,122 @@ public class TCPSession extends Thread {
 				user3.setMail(reader.credential.getMail());
 				user3.setPasswd(reader.credential.getPasswd());
 				writer.createOK();
-				writer.send();
 				break;
-      case Protocol.REQUEST_DELETE_TEXT:
+			case Protocol.REQUEST_GET_ALL_USERS:
 				if (! model.getTokens().isKnown(reader.token)){
 					writer.createKO();
 					break;
 				}
+				Collection<User> users = model.getUsers().getAll();
+				writer.replyAllUsers(users);
+				break;
+			case Protocol.REQUEST_PUT_ALL_PARTICIPANTS:
+				if (! model.getTokens().isKnown(reader.token))
+					writer.createKO();
+				Participant submitter = model.getParticipants().getParticipant(reader.textId, reader.id);
+				if (submitter == null)
+					writer.createKO();;
+				if (! submitter.getRole().isCreator())
+					writer.createKO();
+				model.getParticipants().update(reader.textId, reader.participants);
+				writer.createOK();
+				break;
+			case Protocol.REQUEST_GET_ALL_OPERATIONS:
+				if (! model.getTokens().isKnown(reader.token))
+					writer.createKO();
 				fr.ensisa.hassenforder.tp.database.Participant participant = model.getParticipants().getParticipant(reader.textId, reader.id);
-				if (participant == null){
+				if (participant == null)
+					writer.createKO();
+				if (! participant.getRole().canRead())
+					writer.createKO();
+				Collection<Operation> operations =model.getOperations().getAllOperations(reader.textId);
+				writer.replyAllTextOperationsProcess(adaptOperations(operations));
+				break;
+			case Protocol.REQUEST_PUT_ALL_OPERATIONS:
+				if (! model.getTokens().isKnown(reader.token))
+					writer.createKO();
+				fr.ensisa.hassenforder.tp.database.Participant submitter2 = model.getParticipants().getParticipant(reader.textId,reader.id);
+				if (submitter2 == null)
+					writer.createKO();
+				int k=0;
+				for (boolean[] b : reader.opToSave) {
+					What w =What.COMMENT;
+					boolean valid = false;
+					if (b[0] ==true && submitter2.getRole().canComment()){
+						valid = true;
+						w=What.COMMENT;
+					}
+
+					if (b[1] ==true  && submitter2.getRole().canEdit()){
+						valid = true;
+						w=What.INSERT;
+					}
+
+					if (b[2] ==true  && submitter2.getRole().canEdit()){
+						valid = true;
+						w=What.DELETE;
+					}
+					if (! valid) continue;
+					model.getOperations().addOperation(
+						new fr.ensisa.hassenforder.tp.database.Operation (
+								reader.interOperationsToSave.get(k).getDate(),
+								reader.id,
+								reader.textId,
+								What.valueOf(w.name().toUpperCase()),
+								reader.interOperationsToSave.get(k).getWhere(),
+								reader.interOperationsToSave.get(k).getText()
+						)
+					);
+					k++;
+				}
+                writer.createOK();
+				break;
+			case Protocol.REQUEST_PUT_TEXT_CONTENT:
+				if (! model.getTokens().isKnown(reader.token))
+					writer.createKO();
+				fr.ensisa.hassenforder.tp.database.Participant participant3 = model.getParticipants().getParticipant(reader.textId, reader.id);
+				if (participant3 == null)
+					writer.createKO();
+				if (! participant3.getRole().canEdit())
+					writer.createKO();
+				SharedText text = model.getTexts().getSharedText(reader.textId);
+				text.setContent(reader.content);
+				writer.createOK();
+				break;
+			case Protocol.REQUEST_GET_TEXT:
+				if (! model.getTokens().isKnown(reader.token))
+					writer.createKO();
+				Participant participant4 = model.getParticipants().getParticipant(reader.textId, reader.id);
+				if (participant4 == null)
+					writer.createKO();
+				if (! participant4.getRole().canRead())
+					writer.createKO();
+				adaptText(model.getTexts().getSharedText(reader.textId), reader.id, false);
+				SharedTextReply t = adaptText(model.getTexts().getSharedText(reader.textId), reader.id, false);
+                writer.replyText(t);
+				break;
+			case Protocol.REQUEST_GET_ALL_PARTICIPANTS:
+				if (! model.getTokens().isKnown(reader.token))
+					writer.createKO();
+				fr.ensisa.hassenforder.tp.database.Participant participant5 = model.getParticipants().getParticipant(reader.textId, reader.id);
+				if (participant5 == null)
+					writer.createKO();
+				if (! participant5.getRole().isCreator())
+					writer.createKO();
+				Collection<ParticipantReply> participants = adaptParticipants(model.getParticipants().getAllParticipants(reader.textId));
+				writer.replyAllParticipants(participants);
+				break;
+			case Protocol.REQUEST_DELETE_TEXT:
+				if (! model.getTokens().isKnown(reader.token)){
 					writer.createKO();
 					break;
 				}
-				if (! participant.getRole().isCreator()){
+				fr.ensisa.hassenforder.tp.database.Participant participant6 = model.getParticipants().getParticipant(reader.textId, reader.id);
+				if (participant6 == null){
+					writer.createKO();
+					break;
+				}
+				if (! participant6.getRole().isCreator()){
 					writer.createKO();
 					break;
 				}
@@ -214,23 +320,6 @@ public class TCPSession extends Thread {
 					break;
 				}
 				writer.createOK();
-				break;
-			case Protocol.REQUEST_GET_TEXT:
-				if (! model.getTokens().isKnown(reader.token)){
-					writer.createKO();
-					break;
-				}
-				fr.ensisa.hassenforder.tp.database.Participant participantText = model.getParticipants().getParticipant(reader.textId, reader.id);
-				if (participantText == null){
-					writer.createKO();
-					break;
-				}
-				if (! participantText.getRole().canRead()){
-					writer.createKO();
-					break;
-				}
-				SharedTextReply output = adaptText(model.getTexts().getSharedText(reader.textId), reader.id, false);
-				writer.sendText(output);
 				break;
 			default: result = false; // connection jammed
 			}
